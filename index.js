@@ -3,10 +3,11 @@ const mysql = require('mysql');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
+require('dotenv').config();
 
 const app = express();
 
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', '*');
     res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -19,10 +20,10 @@ const PUERTO = 3000;
 
 const conexion = mysql.createConnection(
     {
-        host: 'localhost',
-        database: 'invensus_storage',
-        user: 'root',
-        password: ''
+        host: process.env.DB_HOST,
+        database: process.env.DB_NAME,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD
     }
 );
 
@@ -40,9 +41,9 @@ app.get('/', (req, res) => {
 });
 
 app.use(cors({
-    origin: 'http://localhost:4200'
+    origin: ['http://localhost:4200']
 }));
- 
+
 
 app.get('/categorias', (req, res) => {
     const query = 'SELECT * FROM categorias;';
@@ -133,7 +134,7 @@ app.post('/usuarios/agregar', async (req, res) => {
         idroles: req.body.idroles
     };
 
-   
+
     try {
         const hashedPassword = await bcrypt.hash(req.body.usu_contrasena, saltRounds);
         usuarios.usu_contrasena = hashedPassword;
@@ -164,7 +165,7 @@ app.get('/usuarios/activos', (req, res) => {
 });
 
 app.get('/usuarios/inactivos', (req, res) => {
-    const query =` SELECT * FROM usuarios WHERE usu_estado = 'inactivo' OR usu_estado IS NULL;`;
+    const query = ` SELECT * FROM usuarios WHERE usu_estado = 'inactivo' OR usu_estado IS NULL;`;
     conexion.query(query, (error, resultado) => {
         if (error) {
             console.error(error.message);
@@ -444,13 +445,13 @@ app.post('/platos/agregar', (req, res) => {
     });
 });
 
-app.post('/venta-platos', (req, res) =>{
+app.post('/venta-platos', (req, res) => {
     const venta = {
         pla_ventas: req.body.pla_ventas
     }
 
     const query = "INSERT INTO platos (pla_ventas) SET ?"
-    conexion.query(query, venta, (error)=>{
+    conexion.query(query, venta, (error) => {
         if (error) return console.error(error.message);
 
         res.json('Se vendio correctamente');
@@ -526,8 +527,8 @@ app.post('/inventario/agregar', (req, res) => {
 
 app.put('/inventario/actualizar/:id', (req, res) => {
     const { id } = req.params;
-    const { invl_entradas, invl_salidas, invl_saldos, idmovimiento_inventario} = req.body;
-   
+    const { invl_entradas, invl_salidas, invl_saldos, idmovimiento_inventario } = req.body;
+
 
     const query = `UPDATE inventario_local1 SET invl_entradas='${invl_entradas}', invl_salidas='${invl_salidas}', invl_saldos='${invl_saldos}', idmovimiento_inventario='${idmovimiento_inventario}' WHERE idinventario_local1='${id}';`;
     conexion.query(query, (error) => {
@@ -653,181 +654,181 @@ app.delete('/proveedores/borrar/:id', (req, res) => {
 
 app.get('/proveedores/exists/:nombre', (req, res) => {
     const { nombre } = req.params;
- 
+
     const query = 'SELECT COUNT(*) AS count FROM proveedores WHERE pro_nombre = ?';
     conexion.query(query, [nombre], (error, resultado) => {
-      if (error) {
-        console.error('Error al ejecutar la consulta:', error);
-        return res.status(500).json({ error: 'Error interno del servidor' });
-      }
- 
-      const count = resultado[0].count;
-      res.json(count > 0); // Devuelve true si el nombre existe, false si no existe
+        if (error) {
+            console.error('Error al ejecutar la consulta:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        const count = resultado[0].count;
+        res.json(count > 0); // Devuelve true si el nombre existe, false si no existe
     });
-  });
-  app.get('/proveedores/exists/direccion/:direccion', (req, res) => {
+});
+app.get('/proveedores/exists/direccion/:direccion', (req, res) => {
     const { direccion } = req.params;
- 
+
     const query = 'SELECT COUNT(*) AS count FROM proveedores WHERE pro_direccion = ?';
     conexion.query(query, [direccion], (error, resultado) => {
-      if (error) {
-        console.error('Error al ejecutar la consulta:', error);
-        return res.status(500).json({ error: 'Error interno del servidor' });
-      }
- 
-      const count = resultado[0].count;
-      res.json(count > 0); // Devuelve true si la dirección existe, false si no existe
+        if (error) {
+            console.error('Error al ejecutar la consulta:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        const count = resultado[0].count;
+        res.json(count > 0); // Devuelve true si la dirección existe, false si no existe
     });
-  });
+});
 // Verificar existencia de correo
 app.get('/proveedores/exists/correo/:correo', (req, res) => {
     const { correo } = req.params;
- 
+
     const query = 'SELECT COUNT(*) AS count FROM proveedores WHERE pro_mail = ?';
     conexion.query(query, [correo], (error, resultado) => {
-      if (error) {
-        console.error('Error al ejecutar la consulta:', error);
-        return res.status(500).json({ error: 'Error interno del servidor' });
-      }
- 
-      const count = resultado[0].count;
-      res.json(count > 0); // Devuelve true si el correo existe, false si no existe
+        if (error) {
+            console.error('Error al ejecutar la consulta:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        const count = resultado[0].count;
+        res.json(count > 0); // Devuelve true si el correo existe, false si no existe
     });
-  });
- 
-  // Verificar existencia de teléfono
-  app.get('/proveedores/exists/telefono/:telefono', (req, res) => {
+});
+
+// Verificar existencia de teléfono
+app.get('/proveedores/exists/telefono/:telefono', (req, res) => {
     const { telefono } = req.params;
- 
+
     const query = 'SELECT COUNT(*) AS count FROM proveedores WHERE pro_telefono = ?';
     conexion.query(query, [telefono], (error, resultado) => {
-      if (error) {
-        console.error('Error al ejecutar la consulta:', error);
-        return res.status(500).json({ error: 'Error interno del servidor' });
-      }
- 
-      const count = resultado[0].count;
-      res.json(count > 0); // Devuelve true si el teléfono existe, false si no existe
+        if (error) {
+            console.error('Error al ejecutar la consulta:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        const count = resultado[0].count;
+        res.json(count > 0); // Devuelve true si el teléfono existe, false si no existe
     });
-  });
-   
+});
+
 
 
 //MOSTRAR TODOS LOS REGISTROS DEL INVENTARIO DE LAS 3 SUCURSALES
-app.get('/sucursal1', (req, res)=>{
+app.get('/sucursal1', (req, res) => {
     const query = 'SELECT sucursal1.*, productos.prod_nombre FROM sucursal1 INNER JOIN productos ON sucursal1.idproducto = productos.idproducto;';
-    conexion.query(query, (error, resultado)=>{
+    conexion.query(query, (error, resultado) => {
         if (error) return console.error(error.message);
 
-        if (resultado.length>0){
+        if (resultado.length > 0) {
             res.json(resultado);
-        }else{
+        } else {
             res.json('No hay inventario en sucursal 1')
         }
     });
 });
 
-app.get('/sucursal2', (req, res)=>{
+app.get('/sucursal2', (req, res) => {
     const query = 'SELECT sucursal2.*, productos.prod_nombre FROM sucursal2 INNER JOIN productos ON sucursal2.idproducto = productos.idproducto;';
-    conexion.query(query, (error, resultado)=>{
+    conexion.query(query, (error, resultado) => {
         if (error) return console.error(error.message);
 
-        if (resultado.length>0){
+        if (resultado.length > 0) {
             res.json(resultado);
-        }else{
+        } else {
             res.json('No hay inventario en sucursal 2')
         }
     });
 });
 
-app.get('/sucursal3', (req, res)=>{
+app.get('/sucursal3', (req, res) => {
     const query = 'SELECT sucursal3.*, productos.prod_nombre FROM sucursal3 INNER JOIN productos ON sucursal3.idproducto = productos.idproducto;';
-    conexion.query(query, (error, resultado)=>{
+    conexion.query(query, (error, resultado) => {
         if (error) return console.error(error.message);
 
-        if (resultado.length>0){
+        if (resultado.length > 0) {
             res.json(resultado);
-        }else {
+        } else {
             res.json('No hay inventario en sucursal 3')
         }
     });
 });
 
 //SELECCIONA LAS LLEGADAS DE TODAS LAS SUCURSALES
-app.get('/llegadas-sucursal1', (req, res)=>{
+app.get('/llegadas-sucursal1', (req, res) => {
     const query = 'SELECT * FROM llegadas_sucursal1;';
-    conexion.query(query, (error, resultado)=>{
+    conexion.query(query, (error, resultado) => {
         if (error) return console.error(error.message);
 
-        if (resultado.length>0){
+        if (resultado.length > 0) {
             res.json(resultado);
-        }else{
+        } else {
             res.json('No hay inventario en sucursal 1')
         }
     });
 });
 
-app.get('/llegadas-sucursal2', (req, res)=>{
+app.get('/llegadas-sucursal2', (req, res) => {
     const query = 'SELECT * FROM llegadas_sucursal2;';
-    conexion.query(query, (error, resultado)=>{
+    conexion.query(query, (error, resultado) => {
         if (error) return console.error(error.message);
 
-        if (resultado.length>0){
+        if (resultado.length > 0) {
             res.json(resultado);
-        }else{
+        } else {
             res.json('No hay inventario en sucursal 1')
         }
     });
 });
 
-app.get('/llegadas-sucursal3', (req, res)=>{
+app.get('/llegadas-sucursal3', (req, res) => {
     const query = 'SELECT * FROM llegadas_sucursal3;';
-    conexion.query(query, (error, resultado)=>{
+    conexion.query(query, (error, resultado) => {
         if (error) return console.error(error.message);
 
-        if (resultado.length>0){
+        if (resultado.length > 0) {
             res.json(resultado);
-        }else{
+        } else {
             res.json('No hay inventario en sucursal 1')
         }
     });
 });
 
 //SELECCIONA LOS PRODUCTOS QUE HAY EL CADA SUCURSAL
-app.get('/llegadas-sucursal1-productos', (req, res)=>{
+app.get('/llegadas-sucursal1-productos', (req, res) => {
     const query = 'select sucursal1.idproducto, productos.prod_nombre, sucursal1.cantidad_producto FROM sucursal1 JOIN productos ON sucursal1.idproducto = productos.idproducto;';
-    conexion.query(query, (error, resultado)=>{
+    conexion.query(query, (error, resultado) => {
         if (error) return console.error(error.message);
 
-        if (resultado.length>0){
+        if (resultado.length > 0) {
             res.json(resultado);
-        }else{
+        } else {
             res.json('No hay inventario en sucursal 1')
         }
     });
 });
 
-app.get('/llegadas-sucursal2-productos', (req, res)=>{
+app.get('/llegadas-sucursal2-productos', (req, res) => {
     const query = 'select sucursal2.idproducto, productos.prod_nombre, sucursal2.cantidad_producto FROM sucursal2 JOIN productos ON sucursal2.idproducto = productos.idproducto;';
-    conexion.query(query, (error, resultado)=>{
+    conexion.query(query, (error, resultado) => {
         if (error) return console.error(error.message);
 
-        if (resultado.length>0){
+        if (resultado.length > 0) {
             res.json(resultado);
-        }else{
+        } else {
             res.json('No hay inventario en sucursal 1')
         }
     });
 });
 
-app.get('/llegadas-sucursal3-productos', (req, res)=>{
+app.get('/llegadas-sucursal3-productos', (req, res) => {
     const query = 'select sucursal3.idproducto, productos.prod_nombre, sucursal3.cantidad_producto FROM sucursal3 JOIN productos ON sucursal3.idproducto = productos.idproducto;';
-    conexion.query(query, (error, resultado)=>{
+    conexion.query(query, (error, resultado) => {
         if (error) return console.error(error.message);
 
-        if (resultado.length>0){
+        if (resultado.length > 0) {
             res.json(resultado);
-        }else{
+        } else {
             res.json('No hay inventario en sucursal 1')
         }
     });
@@ -835,55 +836,55 @@ app.get('/llegadas-sucursal3-productos', (req, res)=>{
 
 
 //SELECCIONA LOS PRODUCTOS QUE NO ESTAN REGISTRADOS EN LAS SUCURSALES
-app.get('/sucursal1noregistrado', (req, res)=>{
+app.get('/sucursal1noregistrado', (req, res) => {
     const query = 'SELECT productos.idproducto, productos.prod_nombre FROM productos LEFT JOIN sucursal1 ON productos.idproducto = sucursal1.idproducto WHERE sucursal1.idproducto IS NULL;';
-    conexion.query(query, (error, resultado)=>{
+    conexion.query(query, (error, resultado) => {
         if (error) return console.error(error.message);
 
-        if(resultado.length>0){
+        if (resultado.length > 0) {
             res.json(resultado);
-        }else{
+        } else {
             res.json('No hay productos')
         }
     });
 });
 
-app.get('/sucursal2noregistrado', (req, res)=>{
+app.get('/sucursal2noregistrado', (req, res) => {
     const query = 'SELECT productos.idproducto, productos.prod_nombre FROM productos LEFT JOIN sucursal2 ON productos.idproducto = sucursal2.idproducto WHERE sucursal2.idproducto IS NULL;';
-    conexion.query(query, (error, resultado)=>{
+    conexion.query(query, (error, resultado) => {
         if (error) return console.error(error.message);
 
-        if(resultado.length>0){
+        if (resultado.length > 0) {
             res.json(resultado);
-        }else{
+        } else {
             res.json('No hay productos')
         }
     });
 });
 
-app.get('/sucursal3noregistrado', (req, res)=>{
+app.get('/sucursal3noregistrado', (req, res) => {
     const query = 'SELECT productos.idproducto, productos.prod_nombre FROM productos LEFT JOIN sucursal3 ON productos.idproducto = sucursal3.idproducto WHERE sucursal3.idproducto IS NULL;';
-    conexion.query(query, (error, resultado)=>{
+    conexion.query(query, (error, resultado) => {
         if (error) return console.error(error.message);
 
-        if(resultado.length>0){
+        if (resultado.length > 0) {
             res.json(resultado);
-        }else{
+        } else {
             res.json('No hay productos')
         }
     });
 });
 
 //TRAE LAS CANTIDADES DE LOS PRODUCTOS
-app.get('/sucursal1cantidad/:id', (req, res) =>{
-    const {id} = req.params;
+app.get('/sucursal1cantidad/:id', (req, res) => {
+    const { id } = req.params;
     const query = `SELECT cantidad_producto FROM sucursal1 WHERE idproducto=${id}`;
-    conexion.query(query, (error, resultado)=>{
+    conexion.query(query, (error, resultado) => {
         if (error) return console.error(error.message);
 
-        if(resultado.length>0){
+        if (resultado.length > 0) {
             res.json(resultado);
-        }else{
+        } else {
             res.json('No hay cantidades');
         }
     });
@@ -946,12 +947,12 @@ app.get('/sucursalessuma', (req, res) => {
     });
 });
 
-app.get('/total-valor', (req, res)=>{
+app.get('/total-valor', (req, res) => {
     const query = `SELECT tp.idproducto, SUM(tp.cantidad_producto) AS cantidad_total, SUM(tp.cantidad_producto * p.prod_valor) AS cantidad_multiplicada FROM ( SELECT idproducto, cantidad_producto FROM sucursal1 UNION ALL SELECT idproducto, cantidad_producto FROM sucursal2 UNION ALL SELECT idproducto, cantidad_producto FROM sucursal3 ) AS tp INNER JOIN productos p ON tp.idproducto = p.idproducto GROUP BY tp.idproducto;`;
-    conexion.query(query,(error, resultado)=>{
+    conexion.query(query, (error, resultado) => {
         if (error) console.error(error.message);
 
-        if(resultado.length>0) {
+        if (resultado.length > 0) {
             res.json(resultado);
         } else {
             res.json('No se encontraron valores');
@@ -961,29 +962,29 @@ app.get('/total-valor', (req, res)=>{
 
 
 //MOSTRAR REGISTRO POR ID DE LAS SUCURSALES
-app.get('/sucursal1/:id', (req, res) =>{
-    const {id} = req.params;
+app.get('/sucursal1/:id', (req, res) => {
+    const { id } = req.params;
 
     const query = `SELECT * FROM sucursal1 WHERE idsucursal=${id};`;
-    conexion.query(query, (error,resultado)=>{
+    conexion.query(query, (error, resultado) => {
         if (error) return console.error(error.message);
 
-        if(resultado.length>0){
+        if (resultado.length > 0) {
             res.json(resultado);
-        }else{
+        } else {
             res.json('No hay registros con el id insertado')
         }
     });
 });
 
-app.get('/sucursal2/:id', (req, res)=>{
-    const {id} = req.params;
+app.get('/sucursal2/:id', (req, res) => {
+    const { id } = req.params;
 
     const query = `SELECT * FROM sucursal2 WHERE idsucursal=${id}`;
-    conexion.query(query, (error,resultado)=>{
+    conexion.query(query, (error, resultado) => {
         if (error) return console.error(error.message);
 
-        if(resultado.length>0){
+        if (resultado.length > 0) {
             res.json(resultado);
         } else {
             res.json('No hay resgistros con el id insertado')
@@ -991,16 +992,16 @@ app.get('/sucursal2/:id', (req, res)=>{
     });
 });
 
-app.get('/sucursal3/:id', (req, res)=>{
-    const {id} = req.params;
+app.get('/sucursal3/:id', (req, res) => {
+    const { id } = req.params;
 
     const query = `SELECT * FROM sucursal3 WHERE idsucursal=${id}`;
-    conexion.query(query, (error,resultado)=>{
-        if(error) return console.error(error.message);
+    conexion.query(query, (error, resultado) => {
+        if (error) return console.error(error.message);
 
-        if(resultado.length>0){
+        if (resultado.length > 0) {
             res.json(resultado);
-        }else{
+        } else {
             res.json('No hay registros con el id insertado')
         }
     });
@@ -1067,7 +1068,7 @@ app.post('/llegadas-sucursal3/agregar', (req, res) => {
     });
 });
 
-app.post('/sucursal2/agregar', (req, res)=>{
+app.post('/sucursal2/agregar', (req, res) => {
     const sucursal2 = {
         idproducto: req.body.idproducto,
         cantidad_producto: req.body.cantidad_producto,
@@ -1075,22 +1076,22 @@ app.post('/sucursal2/agregar', (req, res)=>{
     }
 
     const query = 'INSERT INTO sucursal2 SET ?';
-    conexion.query(query, sucursal2, (error)=>{
+    conexion.query(query, sucursal2, (error) => {
         if (error) return console.error(error.message);
 
         res.json('Se inserto correctamente');
     });
 });
 
-app.post('/sucursal3/agregar', (req, res)=>{
-    const sucursal3={
+app.post('/sucursal3/agregar', (req, res) => {
+    const sucursal3 = {
         idproducto: req.body.idproducto,
         cantidad_producto: req.body.cantidad_producto,
         fecha_ingreso: req.body.fecha_ingreso
     }
 
     const query = 'INSERT INTO sucursal3 SET ?';
-    conexion.query(query, sucursal3, (error)=>{
+    conexion.query(query, sucursal3, (error) => {
         if (error) return console.error(error.message);
 
         res.json('Se inserto correctamente');
@@ -1098,36 +1099,36 @@ app.post('/sucursal3/agregar', (req, res)=>{
 });
 
 //ACTUALIZAR DATOS DE INVENTARIO DE LAS SUCURSALES
-app.put('/sucursal1/actualizar/:idsucursal', (req, res)=>{
-    const {idsucursal} = req.params;
-    const {idproducto, cantidad_producto} = req.body;
+app.put('/sucursal1/actualizar/:idsucursal', (req, res) => {
+    const { idsucursal } = req.params;
+    const { idproducto, cantidad_producto } = req.body;
 
     const query = `UPDATE sucursal1 SET idproducto='${idproducto}', cantidad_producto='${cantidad_producto}' WHERE idsucursal='${idsucursal}';`;
-    conexion.query(query, (error)=>{
-        if(error) return console.error(error.message);
-
-        res.json('Se actualizo correctamente');
-    });
-});
-
-app.put('/sucursal2/actualizar/:idsucursal', (req, res)=>{
-    const {idsucursal} = req.params;
-    const {idproducto, cantidad_producto} = req.body;
-
-    const query = `UPDATE sucursal2 SET idproducto='${idproducto}', cantidad_producto='${cantidad_producto}' WHERE idsucursal='${idsucursal}';`;
-    conexion.query(query, (error)=>{
+    conexion.query(query, (error) => {
         if (error) return console.error(error.message);
 
         res.json('Se actualizo correctamente');
     });
 });
 
-app.put('/sucursal3/actualizar/:idsucursal', (req, res)=>{
-    const {idsucursal} = req.params;
-    const {idproducto, cantidad_producto} = req.body;
+app.put('/sucursal2/actualizar/:idsucursal', (req, res) => {
+    const { idsucursal } = req.params;
+    const { idproducto, cantidad_producto } = req.body;
+
+    const query = `UPDATE sucursal2 SET idproducto='${idproducto}', cantidad_producto='${cantidad_producto}' WHERE idsucursal='${idsucursal}';`;
+    conexion.query(query, (error) => {
+        if (error) return console.error(error.message);
+
+        res.json('Se actualizo correctamente');
+    });
+});
+
+app.put('/sucursal3/actualizar/:idsucursal', (req, res) => {
+    const { idsucursal } = req.params;
+    const { idproducto, cantidad_producto } = req.body;
 
     const query = `UPDATE sucursal3 SET idproducto='${idproducto}', cantidad_producto='${cantidad_producto}' WHERE idsucursal='${idsucursal}';`;
-    conexion.query(query, (error)=>{
+    conexion.query(query, (error) => {
         if (error) return console.error(error.message);
 
         res.json('Se actualizo correctamente');
@@ -1140,7 +1141,7 @@ app.put('/actualizar-cantidad-sucursal1', (req, res) => {
 
     const query = `UPDATE sucursal1 SET cantidad_producto = cantidad_producto + ${nuevaCantidad} WHERE idproducto = '${idproducto}'`;
 
-    conexion.query(query, (error)=>{
+    conexion.query(query, (error) => {
         if (error) return console.log(error.message);
 
         res.json('Se actualizo la cantidad');
@@ -1153,7 +1154,7 @@ app.put('/actualizar-cantidad-sucursal2', (req, res) => {
 
     const query = `UPDATE sucursal2 SET cantidad_producto = cantidad_producto + ${nuevaCantidad} WHERE idproducto = '${idproducto}'`;
 
-    conexion.query(query, (error)=>{
+    conexion.query(query, (error) => {
         if (error) return console.log(error.message);
 
         res.json('Se actualizo la cantidad');
@@ -1166,7 +1167,7 @@ app.put('/actualizar-cantidad-sucursal3', (req, res) => {
 
     const query = `UPDATE sucursal3 SET cantidad_producto = cantidad_producto + ${nuevaCantidad} WHERE idproducto = '${idproducto}'`;
 
-    conexion.query(query, (error)=>{
+    conexion.query(query, (error) => {
         if (error) return console.log(error.message);
 
         res.json('Se actualizo la cantidad');
@@ -1174,33 +1175,33 @@ app.put('/actualizar-cantidad-sucursal3', (req, res) => {
 });
 
 //ELIMINAR REGISTROS DE INVENTARIO SUCURSALES
-app.delete('/sucursal1/borrar/:idsucursal', (req, res)=>{
-    const{idsucursal} = req.params;
+app.delete('/sucursal1/borrar/:idsucursal', (req, res) => {
+    const { idsucursal } = req.params;
 
     const query = `DELETE FROM sucursal1 WHERE idsucursal='${idsucursal}';`;
-    conexion.query(query, (error)=>{
+    conexion.query(query, (error) => {
         if (error) return console.error(error.message);
 
         res.json('Se elimino correctamente');
     });
 });
 
-app.delete('/sucursal2/borrar/:idsucursal', (req, res)=>{
-    const{idsucursal} = req.params;
+app.delete('/sucursal2/borrar/:idsucursal', (req, res) => {
+    const { idsucursal } = req.params;
 
     const query = `DELETE FROM sucursal2 WHERE idsucursal='${idsucursal}';`;
-    conexion.query(query, (error)=>{
+    conexion.query(query, (error) => {
         if (error) return console.error(error.message);
 
         res.json('Se elimino correctamente');
     });
 });
 
-app.delete('/sucursal3/borrar/:idsucursal', (req, res)=>{
-    const {idsucursal} = req.params;
+app.delete('/sucursal3/borrar/:idsucursal', (req, res) => {
+    const { idsucursal } = req.params;
 
     const query = `DELETE FROM sucursal3 WHERE idsucursal='${idsucursal}';`;
-    conexion.query(query, (error)=>{
+    conexion.query(query, (error) => {
         if (error) return console.error(error.message);
 
         res.json('Se elimino correctamente')
@@ -1209,7 +1210,7 @@ app.delete('/sucursal3/borrar/:idsucursal', (req, res)=>{
 
 app.post('/usuarios/registro', async (req, res) => {
     const { usu_nombre, usu_correo, usu_contrasena, usu_tipoid, usu_identificacion, usu_numerotel } = req.body;
-    
+
     try {
         const hashedPassword = await bcrypt.hash(usu_contrasena, saltRounds);
 
@@ -1241,7 +1242,7 @@ app.post('/login', (req, res) => {
         if (results.length === 1) {
             const user = results[0];
             const passwordMatch = await bcrypt.compare(usu_contrasena, user.usu_contrasena);
-           
+
             if (passwordMatch) {
                 res.json({
                     idusuarios: user.idusuarios,
@@ -1317,20 +1318,20 @@ app.get('/proplato/:id', (req, res) => {
 app.get('/proplato/detalles/:id', (req, res) => {
     const id = req.params.id;
     const query = `SELECT * FROM proplato WHERE proplaid = ${id}`;
- 
+
     conexion.query(query, (error, results) => {
-      if (error) {
-        console.error('Error al obtener los detalles del plato:', error);
-        return res.status(500).json({ error: 'Error interno del servidor' });
-      }
- 
-      if (results.length === 0) {
-        return res.status(404).json({ message: 'Plato no encontrado' });
-      }
- 
-      res.json(results[0]); // Suponiendo que solo esperamos un resultado
+        if (error) {
+            console.error('Error al obtener los detalles del plato:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'Plato no encontrado' });
+        }
+
+        res.json(results[0]); // Suponiendo que solo esperamos un resultado
     });
-  });
+});
 
 
 app.post('/proplato/agregar', (req, res) => {
@@ -1380,7 +1381,7 @@ app.put('/proplato/actualizar/:id', (req, res) => {
     const { idplatos, idcategoria, idcategoria2, idcategoria3, idcategoria4, idcategoria5, idcategoria6, idcategoria7, idproducto, cantidad, idproducto2, cantidad2, idproducto3, cantidad3, idproducto4, cantidad4, idproducto5, cantidad5, idproducto6, cantidad6, idproducto7, cantidad7, idproducto8, cantidad8, idproducto9, cantidad9 } = req.body;
 
     const query = `UPDATE proplato SET idplatos=?, idcategoria=?, idcategoria2=?, idcategoria3=?, idcategoria4=?, idcategoria5=?, idcategoria6=?, idcategoria7=?, idproducto=?, cantidad=?, idproducto2=?, cantidad2=?, idproducto3=?, cantidad3=?, idproducto4=?, cantidad4=?, idproducto5=?, cantidad5=?, idproducto6=?, cantidad6=?, idproducto7=?, cantidad7=?, idproducto8=?, cantidad8=?, idproducto9=?, cantidad9=? WHERE proplaid=?`;
-   
+
     const values = [idplatos, idcategoria, idcategoria2 || null, idcategoria3 || null, idcategoria4 || null, idcategoria5 || null, idcategoria6 || null, idcategoria7 || null, idproducto, cantidad, idproducto2 || null, cantidad2 || null, idproducto3 || null, cantidad3 || null, idproducto4 || null, cantidad4 || null, idproducto5 || null, cantidad5 || null, idproducto6 || null, cantidad6 || null, idproducto7 || null, cantidad7 || null, idproducto8 || null, cantidad8 || null, idproducto9 || null, cantidad9 || null, id];
 
     conexion.query(query, values, (error) => {
@@ -1399,19 +1400,19 @@ app.put('/proplato/:id/productos', (req, res) => {
     // Actualizar la cantidad de productos en la tabla productos
     const updateQuery1 = `
     UPDATE sucursal1 AS p
-    INNER JOIN proplato AS pp ON p.idproducto = pp.idproducto
-    SET p.cantidad_producto =
+    INNER JOIN proplato AS pp ON p.idproducto = pp.idproducto2
+    SET p.cantidad_producto = 
         CASE
-            WHEN (p.idproducto = pp.idproducto AND p.cantidad_producto - pp.cantidad < 0) THEN 0
-            ELSE (p.cantidad_producto - pp.cantidad)
+            WHEN p.cantidad_producto - pp.cantidad < 0 THEN 0
+            ELSE p.cantidad_producto - pp.cantidad
         END
-    WHERE pp.proplaid = ${proplaid};
+    WHERE pp.proplaid = ${proplaid};    
     `;
 
     const updateQuery2 = `
     UPDATE sucursal1 AS p
     INNER JOIN proplato AS pp ON p.idproducto = pp.idproducto2
-    SET p.cantidad =
+    SET p.cantidad_producto =
         CASE
             WHEN (p.idproducto = pp.idproducto2 AND p.cantidad_producto - pp.cantidad2 < 0) THEN 0
             ELSE (p.cantidad_producto - pp.cantidad2)
@@ -1422,7 +1423,7 @@ app.put('/proplato/:id/productos', (req, res) => {
     const updateQuery3 = `
     UPDATE sucursal1 AS p
     INNER JOIN proplato AS pp ON p.idproducto = pp.idproducto3
-    SET p.cantidad =
+    SET p.cantidad_producto =
         CASE
             WHEN (p.idproducto = pp.idproducto3 AND p.cantidad_producto - pp.cantidad3 < 0) THEN 0
             ELSE (p.cantidad_producto - pp.cantidad3)
@@ -1433,7 +1434,7 @@ app.put('/proplato/:id/productos', (req, res) => {
     const updateQuery4 = `
     UPDATE sucursal1 AS p
     INNER JOIN proplato AS pp ON p.idproducto = pp.idproducto4
-    SET p.cantidad =
+    SET p.cantidad_producto =
         CASE
             WHEN (p.idproducto = pp.idproducto4 AND p.cantidad_producto - pp.cantidad4 < 0) THEN 0
             ELSE (p.cantidad_producto - pp.cantidad4)
@@ -1444,7 +1445,7 @@ app.put('/proplato/:id/productos', (req, res) => {
     const updateQuery5 = `
     UPDATE sucursal1 AS p
     INNER JOIN proplato AS pp ON p.idproducto = pp.idproducto5
-    SET p.cantidad =
+    SET p.cantidad_producto =
         CASE
             WHEN (p.idproducto = pp.idproducto5 AND p.cantidad_producto - pp.cantidad5 < 0) THEN 0
             ELSE (p.cantidad_producto - pp.cantidad5)
@@ -1455,7 +1456,7 @@ app.put('/proplato/:id/productos', (req, res) => {
     const updateQuery6 = `
     UPDATE sucursal1 AS p
     INNER JOIN proplato AS pp ON p.idproducto = pp.idproducto6
-    SET p.cantidad =
+    SET p.cantidad_producto =
         CASE
             WHEN (p.idproducto = pp.idproducto6 AND p.cantidad_producto - pp.cantidad6 < 0) THEN 0
             ELSE (p.cantidad_producto - pp.cantidad6)
@@ -1466,7 +1467,7 @@ app.put('/proplato/:id/productos', (req, res) => {
     const updateQuery7 = `
     UPDATE sucursal1 AS p
     INNER JOIN proplato AS pp ON p.idproducto = pp.idproducto7
-    SET p.cantidad =
+    SET p.cantidad_producto =
         CASE
             WHEN (p.idproducto = pp.idproducto7 AND p.cantidad_producto - pp.cantidad7 < 0) THEN 0
             ELSE (p.cantidad_producto - pp.cantidad7)
@@ -1477,7 +1478,7 @@ app.put('/proplato/:id/productos', (req, res) => {
     const updateQuery8 = `
     UPDATE sucursal1 AS p
     INNER JOIN proplato AS pp ON p.idproducto = pp.idproducto8
-    SET p.cantidad =
+    SET p.cantidad_producto =
         CASE
             WHEN (p.idproducto = pp.idproducto8 AND p.cantidad_producto - pp.cantidad8 < 0) THEN 0
             ELSE (p.cantidad_producto - pp.cantidad8)
@@ -1488,7 +1489,7 @@ app.put('/proplato/:id/productos', (req, res) => {
     const updateQuery9 = `
     UPDATE sucursal1 AS p
     INNER JOIN proplato AS pp ON p.idproducto = pp.idproducto9
-    SET p.cantidad =
+    SET p.cantidad_producto =
         CASE
             WHEN (p.idproducto = pp.idproducto9 AND p.cantidad_producto - pp.cantidad9 < 0) THEN 0
             ELSE (p.cantidad_producto - pp.cantidad9)
@@ -1566,133 +1567,133 @@ app.put('/proplato/:id/productos', (req, res) => {
 
 app.get('/productos/verificarNombre/:nombre', (req, res) => {
     const { nombre } = req.params;
-  
+
     const query = 'SELECT * FROM productos WHERE prod_nombre = ?';
     conexion.query(query, [nombre], (error, resultado) => {
-      if (error) {
-        console.error(error.message);
-        return res.status(500).json({ error: 'Ocurrió un error al verificar el nombre del producto' });
-      }
-  
-      if (resultado.length > 0) {
-        res.json(true); 
-      } else {
-        res.json(false); 
-      }
-    });
-  });
+        if (error) {
+            console.error(error.message);
+            return res.status(500).json({ error: 'Ocurrió un error al verificar el nombre del producto' });
+        }
 
-  app.get('/proveedores/exists/:nombre', (req, res) => {
+        if (resultado.length > 0) {
+            res.json(true);
+        } else {
+            res.json(false);
+        }
+    });
+});
+
+app.get('/proveedores/exists/:nombre', (req, res) => {
     const { nombre } = req.params;
-  
+
     const query = 'SELECT COUNT(*) AS count FROM proveedores WHERE pro_nombre = ?';
     conexion.query(query, [nombre], (error, resultado) => {
-      if (error) {
-        console.error('Error al ejecutar la consulta:', error);
-        return res.status(500).json({ error: 'Error interno del servidor' });
-      }
-  
-      const count = resultado[0].count;
-      res.json(count > 0); 
+        if (error) {
+            console.error('Error al ejecutar la consulta:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        const count = resultado[0].count;
+        res.json(count > 0);
     });
-  });
-  app.get('/proveedores/exists/direccion/:direccion', (req, res) => {
+});
+app.get('/proveedores/exists/direccion/:direccion', (req, res) => {
     const { direccion } = req.params;
-  
+
     const query = 'SELECT COUNT(*) AS count FROM proveedores WHERE pro_direccion = ?';
     conexion.query(query, [direccion], (error, resultado) => {
-      if (error) {
-        console.error('Error al ejecutar la consulta:', error);
-        return res.status(500).json({ error: 'Error interno del servidor' });
-      }
-  
-      const count = resultado[0].count;
-      res.json(count > 0); 
+        if (error) {
+            console.error('Error al ejecutar la consulta:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        const count = resultado[0].count;
+        res.json(count > 0);
     });
-  });
+});
 app.get('/proveedores/exists/correo/:correo', (req, res) => {
     const { correo } = req.params;
-  
+
     const query = 'SELECT COUNT(*) AS count FROM proveedores WHERE pro_mail = ?';
     conexion.query(query, [correo], (error, resultado) => {
-      if (error) {
-        console.error('Error al ejecutar la consulta:', error);
-        return res.status(500).json({ error: 'Error interno del servidor' });
-      }
-  
-      const count = resultado[0].count;
-      res.json(count > 0); 
+        if (error) {
+            console.error('Error al ejecutar la consulta:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        const count = resultado[0].count;
+        res.json(count > 0);
     });
-  });
-  
-  app.get('/proveedores/exists/telefono/:telefono', (req, res) => {
+});
+
+app.get('/proveedores/exists/telefono/:telefono', (req, res) => {
     const { telefono } = req.params;
-  
+
     const query = 'SELECT COUNT(*) AS count FROM proveedores WHERE pro_telefono = ?';
     conexion.query(query, [telefono], (error, resultado) => {
-      if (error) {
-        console.error('Error al ejecutar la consulta:', error);
-        return res.status(500).json({ error: 'Error interno del servidor' });
-      }
-  
-      const count = resultado[0].count;
-      res.json(count > 0); 
+        if (error) {
+            console.error('Error al ejecutar la consulta:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        const count = resultado[0].count;
+        res.json(count > 0);
     });
-  });
-  app.get('/usuarios/exists/:nombre', (req, res) => {
+});
+app.get('/usuarios/exists/:nombre', (req, res) => {
     const { nombre } = req.params;
-  
+
     const query = 'SELECT COUNT(*) AS count FROM usuarios WHERE usu_nombre = ?';
     conexion.query(query, [nombre], (error, resultado) => {
-      if (error) {
-        console.error('Error al ejecutar la consulta:', error);
-        return res.status(500).json({ error: 'Error interno del servidor' });
-      }
-  
-      const count = resultado[0].count;
-      res.json(count > 0); 
+        if (error) {
+            console.error('Error al ejecutar la consulta:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        const count = resultado[0].count;
+        res.json(count > 0);
     });
-  });
-  app.get('/usuarios/exists/identificacion/:identificacion', (req, res) => {
+});
+app.get('/usuarios/exists/identificacion/:identificacion', (req, res) => {
     const { identificacion } = req.params;
-  
+
     const query = 'SELECT COUNT(*) AS count FROM usuarios WHERE usu_identificacion = ?';
     conexion.query(query, [identificacion], (error, resultado) => {
-      if (error) {
-        console.error('Error al ejecutar la consulta:', error);
-        return res.status(500).json({ error: 'Error interno del servidor' });
-      }
-  
-      const count = resultado[0].count;
-      res.json(count > 0); 
+        if (error) {
+            console.error('Error al ejecutar la consulta:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        const count = resultado[0].count;
+        res.json(count > 0);
     });
-  });
+});
 app.get('/usuarios/exists/correo/:correo', (req, res) => {
     const { correo } = req.params;
-  
+
     const query = 'SELECT COUNT(*) AS count FROM usuarios WHERE usu_correo = ?';
     conexion.query(query, [correo], (error, resultado) => {
-      if (error) {
-        console.error('Error al ejecutar la consulta:', error);
-        return res.status(500).json({ error: 'Error interno del servidor' });
-      }
-  
-      const count = resultado[0].count;
-      res.json(count > 0); 
+        if (error) {
+            console.error('Error al ejecutar la consulta:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        const count = resultado[0].count;
+        res.json(count > 0);
     });
-  });
-  
-  app.get('/usuarios/exists/telefono/:telefono', (req, res) => {
+});
+
+app.get('/usuarios/exists/telefono/:telefono', (req, res) => {
     const { telefono } = req.params;
-  
+
     const query = 'SELECT COUNT(*) AS count FROM usuarios WHERE usu_numerotel = ?';
     conexion.query(query, [telefono], (error, resultado) => {
-      if (error) {
-        console.error('Error al ejecutar la consulta:', error);
-        return res.status(500).json({ error: 'Error interno del servidor' });
-      }
-  
-      const count = resultado[0].count;
-      res.json(count > 0); 
+        if (error) {
+            console.error('Error al ejecutar la consulta:', error);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+
+        const count = resultado[0].count;
+        res.json(count > 0);
     });
-  });
+});
