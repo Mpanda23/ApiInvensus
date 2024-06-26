@@ -41,7 +41,7 @@ app.get('/', (req, res) => {
 });
 
 app.use(cors({
-    origin: ['https://invensusstorage.netlify.app/']
+    origin: ['https://invensusstorage.netlify.app']
 }));
 
 
